@@ -80,6 +80,18 @@ class Block(Entity):
                 self.image = blank_img
                 self.y += 10
 
+class Enemy(Entity):
+    dead = False
+    def touch(self):
+        if not self.dead:
+            self.dead = True
+        else:
+            if self.y > 300 and not self.isFall:
+                self.y -= 10
+            elif self.y < 500:
+                self.isFall = True
+                self.y += 20
+
 #Define a function to generate random clouds
 def generate_cloud() -> Entity:
     #Generate random position and speed for a cloud entity
@@ -114,6 +126,10 @@ cloud_night_img = pygame.image.load("cloud_night.png")
 brick_img = pygame.image.load("brick.png")
 block_img = pygame.image.load("block.png")
 blank_img = pygame.image.load("block_blank.png")
+monster_img = pygame.image.load("monster.png")
+flag_img = pygame.image.load("flag.png")
+pod_img = pygame.image.load("pod.png")
+end_img = pygame.image.load("end.png")
 
 #Initialize the Mario Character
 mario = Character("Mario",0,350,3,7)
@@ -132,9 +148,19 @@ for i in range(3):
     blocks.append(Block(250 + 50*i,250,0,brick_img))
 blocks.append(Block(400,250,0,block_img))
 
+#Initialize the monster entity
+monsters = []
+
+#Initialze the flag entity
+flag = Entity(600,50,0,flag_img)
+pod = Entity(570,15,0,pod_img)
+
 #Initialize the sun entity
 sun = Entity(0,0,1,sun_img)
 isDay = True
+
+#Initialize the End Title
+end = Entity(170,600,0,end_img)
 
 #The color for the sky
 sky = sky_day
@@ -206,6 +232,15 @@ while not done:
     for block in blocks:
         block.draw()
 
+    #Monster Control
+    for monster in monsters:
+        monster.draw()
+
+    #Flag Control
+    if scene == 3:
+        flag.draw()
+        pod.draw()
+
     #Mario control
 
     #Draw Mario
@@ -221,8 +256,7 @@ while not done:
                 mario.jump()
             elif mario.y < 350:
                 mario.isFall = True
-                if scene == 0:
-                    blocks[3].touch()
+                blocks[3].touch()
                 mario.fall()
             else:
                 mario.gesture = 5
@@ -234,28 +268,54 @@ while not done:
                 mario.jump()
             elif mario.y < 300:
                 mario.isFall = True
-                if scene == 0:
-                    blocks[3].touch()
                 mario.fall()
+            else:
+                mario.gesture = 5
+                stage = 1
+                mario.isFall = False
+        else:
+            if mario.y > 300 and not mario.isFall:
+                #jump to break the block
+                mario.jump()
+                mario.forward()
+            elif mario.y < 350:
+                mario.isFall = True
+                mario.fall()
+                monsters[0].touch()
             else:
                 mario.gesture = 5
                 stage = 1
                 mario.isFall = False
     #Mario Movement Stage 1
     if stage == 1:
-        if mario.x < 400:
-            mario.forward()
-        elif mario.y > 300 and not mario.isFall:
-            mario.jump()
-        elif mario.y < 350:
-            mario.isFall = True
-            if scene == 0:
-                blocks[7].touch()
-            mario.fall()
+        if scene == 2 or scene == 3:
+            if mario.x < 400:
+                mario.forward()
+            elif mario.y > 300 and not mario.isFall:
+                mario.jump()
+                mario.forward()
+            elif mario.y < 350:
+                mario.isFall = True
+                mario.fall()
+                monsters[1].touch()
+            else:
+                mario.gesture = 5
+                stage = 2
+                mario.isFall = False
         else:
-            mario.gesture = 5
-            stage = 2
-            mario.isFall = False
+            if mario.x < 400:
+                mario.forward()
+            elif mario.y > 300 and not mario.isFall:
+                mario.jump()
+            elif mario.y < 350:
+                mario.isFall = True
+                if scene == 0:
+                    blocks[7].touch()
+                mario.fall()
+            else:
+                mario.gesture = 5
+                stage = 2
+                mario.isFall = False
     #Mario Movement Stage 2
     if stage == 2:
         if mario.x < 600:
@@ -263,13 +323,18 @@ while not done:
         else:
             if scene == 3:
                 mario.speed = 7
-                if mario.y > 100 and not mario.isFall:
+                if mario.y > 50 and not mario.isFall:
                     mario.jump()
                 elif mario.y < 350:
                     mario.isFall = True
                     mario.fall()
+                    flag.y += 6
                 else:
                     mario.gesture = 5
+                    if end.y > 100:
+                        end.y -= 3
+                    end.draw()
+                    
             else:
                 mario.gesture = 5
                 stage = 3
@@ -286,6 +351,10 @@ while not done:
             if scene == 1:
                 for i in range(3):
                     blocks.append(Block(250 + 50*i,365,0,brick_img))
+            elif scene == 2 or scene == 3:
+                monsters.clear()
+                for i in range(2):
+                    monsters.append(Enemy(250 + 200*i,350,0,monster_img))
 
     #Update the screen
     pygame.display.flip()
