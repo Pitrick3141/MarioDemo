@@ -1,9 +1,9 @@
 #Import library 
 import pygame
-import math 
+import math
 import random
 
-#Define colours 
+#Define colours
 sky_day = (93,148,251)
 sky_night = (172,93,251)
 
@@ -19,16 +19,19 @@ class Entity:
     image = ""
     isFall = False
 
+    #The initial function 
     def __init__(self,x:int,y:int,speed:int,image:pygame.Surface) -> None:
         self.x = x
         self.y = y
         self.speed = speed
         self.image = image
     
+    #Move any object forward
     def forward(self) -> None:
         self.gesture = round(frames / 9 % 3)
         self.x = self.x + self.speed
     
+    #Print any object on the screen
     def draw(self) -> None:
         screen.blit(self.image,(self.x,self.y))
 
@@ -68,7 +71,6 @@ class Block(Entity):
     broken = False
     def touch(self):
         if not self.broken:
-            print("it is broken")
             self.broken = True
         else:
             if self.y > 200 and not self.isFall:
@@ -84,7 +86,7 @@ def generate_cloud() -> Entity:
     x = random.randint(-200,-50)
     y = random.randint(0,300)
     speed = random.uniform(1,2)
-    print("[Debug] Generated cloud at ({0},{1}) speed = {2}".format(x,y,speed))
+    #print("[Debug] Generated cloud at ({0},{1}) speed = {2}".format(x,y,speed))
     return Entity(x,y,speed,cloud_img)
 
 #Initialize Pygame
@@ -97,10 +99,10 @@ screen = pygame.display.set_mode(size)
 #Set the title of the window
 pygame.display.set_caption("[Yichen Wang] Pygame - Super Mario Demo")
 
-#Loop until the user clicks the close button 
-done = False 
+#Loop until the user clicks the close button
+done = False
 
-#Manage how fast the screen updates 
+#Manage how fast the screen updates
 clock = pygame.time.Clock()
 
 #import the images
@@ -146,18 +148,18 @@ stage = 0
 #Index of scene
 scene = 0
 
-#Main Program Loop 
+#Main Program Loop
 while not done:
-    #Main event loop 
-    for event in pygame.event.get(): 
-        if event.type == pygame.QUIT: 
+    #Main event loop
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
             done = True
-        #If user clicks close, it will end the main loop. 
+        #If user clicks close, it will end the main loop.
 
     #Set the screen
     screen.fill(sky)
 
-    #Drawing code here 
+    #Drawing code here
 
     #Sun control
     sun.forward()
@@ -213,18 +215,32 @@ while not done:
     if stage == 0:
         if mario.x < 200:
             mario.forward()
-        elif mario.y > 300 and not mario.isFall:
-            #jump to break the block
-            mario.jump()
-        elif mario.y < 350:
-            mario.isFall = True
-            if scene == 0:
-                blocks[3].touch()
-            mario.fall()
-        else:
-            mario.gesture = 5
-            stage = 1
-            mario.isFall = False
+        elif scene == 0:
+            if mario.y > 300 and not mario.isFall:
+                #jump to break the block
+                mario.jump()
+            elif mario.y < 350:
+                mario.isFall = True
+                if scene == 0:
+                    blocks[3].touch()
+                mario.fall()
+            else:
+                mario.gesture = 5
+                stage = 1
+                mario.isFall = False
+        elif scene == 1:
+            if mario.y > 300 and not mario.isFall:
+                #jump to break the block
+                mario.jump()
+            elif mario.y < 300:
+                mario.isFall = True
+                if scene == 0:
+                    blocks[3].touch()
+                mario.fall()
+            else:
+                mario.gesture = 5
+                stage = 1
+                mario.isFall = False
     #Mario Movement Stage 1
     if stage == 1:
         if mario.x < 400:
@@ -244,15 +260,20 @@ while not done:
     if stage == 2:
         if mario.x < 600:
             mario.forward()
-        elif mario.y > 300 and not mario.isFall:
-            mario.jump()
-        elif mario.y < 350:
-            mario.isFall = True
-            mario.fall()
         else:
-            mario.gesture = 5
-            stage = 3
-            mario.isFall = False
+            if scene == 3:
+                mario.speed = 7
+                if mario.y > 100 and not mario.isFall:
+                    mario.jump()
+                elif mario.y < 350:
+                    mario.isFall = True
+                    mario.fall()
+                else:
+                    mario.gesture = 5
+            else:
+                mario.gesture = 5
+                stage = 3
+                mario.isFall = False
     #Mario Movement Stage 3
     if stage == 3:
         if mario.x < 700:
@@ -260,17 +281,20 @@ while not done:
         else:
             mario.x = 0
             stage = 0
-            scene = 1
+            scene += 1
             blocks.clear()
+            if scene == 1:
+                for i in range(3):
+                    blocks.append(Block(250 + 50*i,365,0,brick_img))
 
-    #Update the screen 
+    #Update the screen
     pygame.display.flip()
 
     #update frame counter
     frames += 1
 
-    #Set number of frames per second 
+    #Set number of frames per second
     clock.tick(60)
 
-#Close the window and quit 
+#Close the window and quit
 pygame.quit()
